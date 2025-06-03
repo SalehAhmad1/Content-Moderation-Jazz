@@ -1,0 +1,1 @@
+ngrok http --domain=civil-daring-halibut.ngrok-free.app 5000
