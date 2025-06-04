@@ -6,6 +6,7 @@ import { CloudArrowUpIcon } from '@heroicons/react/24/outline';
 
 export default function VideoUpload({ apiKey, options, setResults, isAnalyzing, setIsAnalyzing }) {
   const [previewUrl, setPreviewUrl] = useState(null);
+  const MAX_FILE_SIZE = 20 * 1024 * 1024; // 100MB in bytes
   
   // Cleanup the previous preview URL when component unmounts or when a new video is uploaded
   useEffect(() => {
@@ -41,6 +42,12 @@ export default function VideoUpload({ apiKey, options, setResults, isAnalyzing, 
     const file = acceptedFiles[0];
     if (!file) return;
     
+    // Check file size
+    if (file.size > MAX_FILE_SIZE) {
+      toast.error(`File exceeds size limit of ${MAX_FILE_SIZE / (1024 * 1024)}MB`);
+      return;
+    }
+    
     // Create a URL for the video preview
     const videoUrl = URL.createObjectURL(file);
     setPreviewUrl(videoUrl);
@@ -57,7 +64,8 @@ export default function VideoUpload({ apiKey, options, setResults, isAnalyzing, 
     setIsAnalyzing(true);
     
     try {
-      const response = await axios.post('https://civil-daring-halibut.ngrok-free.app/analyze', formData, {
+      // const response = await axios.post('https://civil-daring-halibut.ngrok-free.app/analyze', formData, {
+      const response = await axios.post('http://0.0.0.0:8000/analyze', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
@@ -94,7 +102,7 @@ export default function VideoUpload({ apiKey, options, setResults, isAnalyzing, 
         <p className="mt-4 text-lg text-gray-600">
           {isAnalyzing ? 'Analyzing video...' : isDragActive ? 'Drop the video here' : 'Drag & drop a video, or click to select'}
         </p>
-        <p className="mt-2 text-sm text-gray-500">Supported formats: MP4, AVI, MOV</p>
+        <p className="mt-2 text-sm text-gray-500">Supported formats: MP4, AVI, MOV (Max size: {MAX_FILE_SIZE / (1024 * 1024)}MB)</p>
       </div>
       
       {previewUrl && (

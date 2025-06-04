@@ -63,7 +63,7 @@ def extract_frames(video_path, output_dir, frame_interval=1):
     print(f"Total frames extracted: {len(extracted_frames)}")
     return extracted_frames
 
-def process_images_vit(image_paths, batch_size=32):
+def process_images_vit(image_paths, batch_size=256):
     """Processes images using the ViT-based NSFW model in batches."""
     print("Processing images using ViT-based model...")
     vit_predictions = {}
@@ -91,7 +91,7 @@ def process_images_vit(image_paths, batch_size=32):
     print("ViT processing complete.")
     return vit_predictions
 
-def process_images_pipeline(image_paths, batch_size=32):
+def process_images_pipeline(image_paths, batch_size=256):
     """Processes images using the pipeline-based NSFW classifier in batches."""
     print("Processing images using pipeline-based classifier...")
     pipeline_predictions = {}
@@ -156,12 +156,12 @@ def main(video_path, frame_interval=1):
         return "Error"
 
     print("Running ViT-based model on extracted frames...")
-    vit_results = process_images_vit(frames, batch_size=128)
+    vit_results = process_images_vit(frames, batch_size=512)
 
     empty_cuda()
 
     print("Running pipeline-based classifier on extracted frames...")
-    pipeline_results = process_images_pipeline(frames, batch_size=128)
+    pipeline_results = process_images_pipeline(frames, batch_size=512)
     
     # Combine the predictions for each frame
     combined_results = {}
@@ -188,7 +188,7 @@ def main(video_path, frame_interval=1):
     total_frames = counts["sfw"] + counts["nsfw"]
     nsfw_percentage = counts["nsfw"] / total_frames if total_frames > 0 else 0
 
-    if nsfw_percentage >= 0.20:
+    if nsfw_percentage >= 0.05:
         final_decision = "NSFW (Not Safe For Work)"
     else:
         final_decision = "SFW (Safe For Work)"
