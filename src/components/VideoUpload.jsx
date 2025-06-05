@@ -6,7 +6,8 @@ import { CloudArrowUpIcon } from '@heroicons/react/24/outline';
 
 export default function VideoUpload({ apiKey, options, setResults, isAnalyzing, setIsAnalyzing }) {
   const [previewUrl, setPreviewUrl] = useState(null);
-  const MAX_FILE_SIZE = 20 * 1024 * 1024; // 100MB in bytes
+  // const MAX_FILE_SIZE = 20 * 1024 * 1024; // 100MB in bytes
+  const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB in bytes
   
   // Cleanup the previous preview URL when component unmounts or when a new video is uploaded
   useEffect(() => {
@@ -64,8 +65,8 @@ export default function VideoUpload({ apiKey, options, setResults, isAnalyzing, 
     setIsAnalyzing(true);
     
     try {
-      // const response = await axios.post('https://civil-daring-halibut.ngrok-free.app/analyze', formData, {
-      const response = await axios.post('http://0.0.0.0:8000/analyze', formData, {
+      const response = await axios.post('https://civil-daring-halibut.ngrok-free.app/analyze', formData, {
+      // const response = await axios.post('http://0.0.0.0:8000/analyze', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },

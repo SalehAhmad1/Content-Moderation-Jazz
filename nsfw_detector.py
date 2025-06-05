@@ -5,22 +5,7 @@ import matplotlib.pyplot as plt
 from transformers import ViTImageProcessor, AutoModelForImageClassification, pipeline
 from PIL import Image
 import shutil
-# from ultralytics import YOLO
-
-# class HumanDetector:
-#     def __init__(self, model_path="yolo11n.pt"):
-#         self.model = YOLO(model_path)
-#         self.device = "cuda" if torch.cuda.is_available() else "cpu"
-#         self.model.to(self.device)
-
-#     def detect_person(self, image_path):
-#         results = self.model(image_path)
-        
-#         for result in results:
-#             names = [result.names[cls.item()] for cls in result.boxes.cls.int()]
-#             if "person" in names:
-#                 return True  # Person detected
-#         return False  # No person detected
+import random
 
 # Load Model 1: ViT-based NSFW detector
 print("Loading ViT-based NSFW detector...")
@@ -44,7 +29,7 @@ def extract_frames(video_path, output_dir, frame_interval=1):
     os.makedirs(output_dir, exist_ok=True)
     cap = cv2.VideoCapture(video_path)
     frame_count = 0
-    extracted_frames = []
+    count = 0
 
     while cap.isOpened():
         ret, frame = cap.read()
@@ -52,22 +37,23 @@ def extract_frames(video_path, output_dir, frame_interval=1):
             break
 
         if frame_count % frame_interval == 0:
+            count += 1
             frame_path = os.path.join(output_dir, f"frame_{frame_count}.jpg")
             cv2.imwrite(frame_path, frame)
-            extracted_frames.append(frame_path)
             print(f"Extracted frame {frame_count} to {frame_path}")
 
         frame_count += 1
 
     cap.release()
-    print(f"Total frames extracted: {len(extracted_frames)}")
-    return extracted_frames
+    print(f"Total frames extracted: {count}")
+    return
 
-def process_images_vit(image_paths, batch_size=256):
+def process_images_vit(frames_dir, batch_size=256):
     """Processes images using the ViT-based NSFW model in batches."""
     print("Processing images using ViT-based model...")
     vit_predictions = {}
-    n = len(image_paths)
+    n = len(os.listdir(frames_dir))
+    image_paths = [os.path.join(frames_dir, f) for f in os.listdir(frames_dir) if f.endswith('.jpg')]
 
     for i in range(0, n, batch_size):
         batch_paths = image_paths[i:i+batch_size]
@@ -91,11 +77,12 @@ def process_images_vit(image_paths, batch_size=256):
     print("ViT processing complete.")
     return vit_predictions
 
-def process_images_pipeline(image_paths, batch_size=256):
+def process_images_pipeline(frames_dir, batch_size=256):
     """Processes images using the pipeline-based NSFW classifier in batches."""
     print("Processing images using pipeline-based classifier...")
     pipeline_predictions = {}
-    n = len(image_paths)
+    n = len(os.listdir(frames_dir))
+    image_paths = [os.path.join(frames_dir, f) for f in os.listdir(frames_dir) if f.endswith('.jpg')]
 
     for i in range(0, n, batch_size):
         batch_paths = image_paths[i:i+batch_size]
@@ -142,26 +129,22 @@ def empty_cuda():
 def main(video_path, frame_interval=1):
     """Main function: Extracts frames, runs models, and determines NSFW status."""
     print(f"Starting NSFW detection for video: {video_path}")
-    output_dir = "video_frames"
+    output_dir = "./video_frames"
     # Remove the directory if it exists, otherwise create it
     if os.path.exists(output_dir):
         print("Removing existing frames directory...")
         shutil.rmtree(output_dir)
     os.makedirs(output_dir, exist_ok=True)
 
-    frames = extract_frames(video_path, output_dir, frame_interval)
-
-    if not frames:
-        print("No frames extracted. Exiting.")
-        return "Error"
+    extract_frames(video_path, output_dir, frame_interval)
 
     print("Running ViT-based model on extracted frames...")
-    vit_results = process_images_vit(frames, batch_size=512)
+    vit_results = process_images_vit(output_dir, batch_size=490)
 
     empty_cuda()
 
     print("Running pipeline-based classifier on extracted frames...")
-    pipeline_results = process_images_pipeline(frames, batch_size=512)
+    pipeline_results = process_images_pipeline(output_dir, batch_size=490)
     
     # Combine the predictions for each frame
     combined_results = {}
